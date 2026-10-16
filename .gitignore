@@ -1,55 +1,56 @@
-# Prerequisites
-*.d
+########################################
+# Build outputs (STM32CubeIDE / GCC)
+########################################
+Debug/
+Release/
+build/
+cmake-build-*/
 
-# Object files
+# Extensiones de salida de compilación que, en este proyecto, solo aparecen
+# dentro de Debug/Release (ver arriba). No se listan *.a ni *.s: el proyecto
+# versiona una librería estática (AI/Middlewares/Lib) y un fichero de arranque
+# en ensamblador (Core/Startup) que comparten esas extensiones.
 *.o
-*.ko
-*.obj
-*.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
+*.d
 *.su
-*.idb
-*.pdb
+*.cyclo
+*.list
+*.map
+*.elf
+*.bin
+*.hex
+*.out
+*.i
+*.ii
+*.lst
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+########################################
+# STM32CubeIDE / Eclipse CDT project metadata
+########################################
+.metadata/
+.settings/
+.mxproject
+*.launch
+Backup/
 
-# debug information files
-*.dwo
+.cproject.bak
+.project.bak
+
+########################################
+# STM32CubeMX (.ioc) / STM32Cube.AI Studio
+########################################
+*.ioc.bak
+*.log
+STM32CubeMX.log
+.ai/
+
+########################################
+# OS / editor junk
+########################################
+.DS_Store
+Thumbs.db
+.directory
+*.swp
+*~
+.vscode/
+.idea/
