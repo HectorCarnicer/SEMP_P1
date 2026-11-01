@@ -13,4 +13,8 @@
 #define N_SAMPLES 200
 #define N_RFID_PWD 6
 
+
+#define GPIO_LED_PORT GPIOD
+#define GPIO_LED_PIN GPIO_PIN_15
+
 #endif /* INC_MAIN_CONFIG_H_ */

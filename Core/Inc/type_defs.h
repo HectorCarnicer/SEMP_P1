@@ -8,6 +8,8 @@
 #ifndef INC_TYPE_DEFS_H_
 #define INC_TYPE_DEFS_H_
 
+#include <stdint.h>
+
 typedef enum {
 	IDLE,
 	ACTIVE,
@@ -18,8 +20,8 @@ typedef enum {
 typedef enum
 {
 	TIMEOUT,
-	ERROR_1,
-	ERROR_2
+	ERROR_SPI,
+	ERROR_TIMER
 }error_t;
 
 typedef struct
