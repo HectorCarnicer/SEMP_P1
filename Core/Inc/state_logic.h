@@ -13,13 +13,18 @@
 #include "mfrc522.h"
 #include "main.h"
 
+// DECLARACIÓN DE VARIABLES
+// Ventana de muestreo, índice y flag para almacenar 200 primeras muestras como media para calcular
+extern volatile uint8_t sample_idx;
+extern volatile acc_sample window [N_SAMPLES];
+extern volatile acc_sample nueva_muestra;
+extern volatile uint8_t Cal_OK_flag;
 
-extern volatile uint8_t g_sample_counter;
-extern volatile acc_sample acc [N_SAMPLES];
 extern volatile uint32_t current_pwd [N_RFID_PWD];
 
 extern volatile uint8_t TIM3_LED_flag;
-
+extern volatile uint8_t TIM2_ACL_flag;
+extern volatile uint8_t PA0_BTUSR_flag;
 
 error_t StateMachine_Init();
 

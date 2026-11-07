@@ -13,7 +13,7 @@
 typedef enum {
 	IDLE,
 	ACTIVE,
-	OPEN,
+	OPENCLOSE,
 	ALARM
 } state_t;
 
@@ -30,8 +30,6 @@ typedef struct
 	uint32_t y_axis;
 	uint32_t z_axis;
 }acc_sample;
-
-
 
 
 #endif /* INC_TYPE_DEFS_H_ */
