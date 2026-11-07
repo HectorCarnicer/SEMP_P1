@@ -15,9 +15,14 @@
 
 // DECLARACIÓN DE VARIABLES
 // Ventana de muestreo, índice y flag para almacenar 200 primeras muestras como media para calcular
-extern volatile uint8_t sample_idx;
+extern volatile uint16_t sample_idx;
+
 extern volatile acc_sample window [N_SAMPLES];
-extern volatile acc_sample nueva_muestra;
+extern volatile acc_sample grav_window [N_SAMPLES];
+extern volatile acc_sample grav_sample;
+extern volatile int16_t raw_acel[3];
+extern volatile acc_sample new_sample;
+
 extern volatile uint8_t Cal_OK_flag;
 
 extern volatile uint32_t current_pwd [N_RFID_PWD];

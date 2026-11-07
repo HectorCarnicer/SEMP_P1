@@ -24,11 +24,13 @@ typedef enum
 	ERROR_TIMER
 }error_t;
 
+
+
 typedef struct
 {
-	uint32_t x_axis;
-	uint32_t y_axis;
-	uint32_t z_axis;
+	int16_t x_axis;
+	int16_t y_axis;
+	int16_t z_axis;
 }acc_sample;
 
 
