@@ -14,27 +14,101 @@
 #include "stm32f4xx_it.h"
 #include "type_defs.h"
 #include "main.h"
+#include "stm32f4xx_hal.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+// Usar la librería que nos dan
+#ifndef HAL_USE_MFRC522
+#define HAL_USE_MFRC522         1
+#endif
 
 
-typedef enum
-{
-	RFID_RESET = 0,
-	RFID_STARTUP = 1,
-	RFID_NO_CARD = 2,
-	RFID_CARD = 3,
-	ERROR = 4,
-}RFID_state_t;
+// ------------------------------------ //
+// Parámetros ajustables, por si no se han definido en el main_config.h global
+// ------------------------------------ //
+
+#ifndef RFID_POLL_MS
+#define RFID_POLL_MS            100U    /* periodo entre lecturas                     */
+#endif
+#ifndef RFID_RST_LOW_MS
+#define RFID_RST_LOW_MS         2U      /* duración del pulso de reset                */
+#endif
+#ifndef RFID_STARTUP_MS
+#define RFID_STARTUP_MS         50U     /* arranque del oscilador del MFRC522         */
+#endif
+#ifndef RFID_RETRY_MS
+#define RFID_RETRY_MS           1000U   /* reintento de inicialización tras un error  */
+#endif
+#ifndef RFID_REMOVE_MISSES
+#define RFID_REMOVE_MISSES      2U      /* lecturas fallidas seguidas para "retirada" */
+#endif
+#ifndef RFID_RESUME_GAP_MS
+#define RFID_RESUME_GAP_MS      (3U * RFID_POLL_MS) /* pausa que se considera "reanudación" */
+#endif
 
 
 
-// Acceder al estado de la FSM de RFID desde la FSM global
-extern volatile RFID_state_t state;
+// La librería que pone en el enunciado (MFRC522) no compila si no se pone esto
+// Son macros que usa definidas en alguna librería que no usamos
+// Ni idea de lo que hacen
+#define osalDbgCheck(c)         ((void)0)
+#define osalDbgAssert(c, r)     ((void)0)
+#define osalSysLock()           ((void)0)
+#define osalSysUnlock()         ((void)0)
 
-void RFID_FSM_Start();
-void RFID_FSM_Run();
-void RFID_FSM_EnterMode();
 
 
+
+
+/* Opcional: valor de TReloadRegL tras MFRC522Start() para acortar el timeout de
+   la tarjeta (cada unidad = 0,5 ms con la configuración de la librería; ésta
+   pone 30 = 15 ms). Si no se define, se deja el valor de la librería.         */
+/* #define RFID_TIMER_RELOAD    6U */
+
+// ------------------------------------ //
+// Tipos específicos del RFID
+// ------------------------------------ //
+
+typedef enum {
+    ST_RESET,
+    ST_RESET_LOW,
+    ST_STARTUP,
+    ST_READY,
+    ST_ERROR
+} State;
+
+typedef struct {
+    SPI_HandleTypeDef *hspi;
+    GPIO_TypeDef      *cs_port;
+    uint16_t           cs_pin;
+    GPIO_TypeDef      *rst_port;
+    uint16_t           rst_pin;
+    // Puntero a función que devuelve los ms actuales. Lo suyo es pasarle HAL_GetTick() o alguna movida
+    // Es para no usar HAL_Delay()s bloqueantes
+    uint32_t         (*get_ms)(void);
+} RFID_Config;
+
+typedef struct {
+    uint8_t size;                       /* 4, 7 o 10 bytes */
+    uint8_t bytes[10];
+} RFID_Uid;
+
+typedef enum {
+    RFID_EV_NONE = 0,       /* nada nuevo en esta llamada (inicializando, esperando
+                               el periodo, o lectura sin cambios)                    */
+    RFID_EV_CARD_ARRIVED,   /* tarjeta nueva (o distinta a la anterior); uid relleno */
+    RFID_EV_CARD_REMOVED,   /* la tarjeta se ha retirado; uid = la que se fue        */
+    RFID_EV_ERROR           /* el lector no responde por SPI (se reintenta solo)     */
+} RFID_Event;
+
+// ------------------------------------ //
+// Funciones para usar en state_logic global.
+// ------------------------------------ //
+void        RFID_StateMachine_Init(const RFID_Config *cfg);
+RFID_Event  RFID_StateMachine_Run(RFID_Uid *uid);        /* uid puede ser NULL */
+bool        RFID_IsReady(void);             /* inicializado y sondeando           */
+bool        RFID_CardPresent(void);         /* según la última lectura realizada  */
 
 
 #endif /* INC_RFID_STATE_LOGIC_H_ */
