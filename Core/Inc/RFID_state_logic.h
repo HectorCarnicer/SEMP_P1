@@ -29,7 +29,7 @@
 // ------------------------------------ //
 
 #ifndef RFID_POLL_MS
-#define RFID_POLL_MS            100U    /* periodo entre lecturas                     */
+#define RFID_POLL_MS            100U
 #endif
 #ifndef RFID_RST_LOW_MS
 #define RFID_RST_LOW_MS         2U      /* duración del pulso de reset                */
@@ -44,12 +44,12 @@
 #define RFID_REMOVE_MISSES      2U      /* lecturas fallidas seguidas para "retirada" */
 #endif
 #ifndef RFID_RESUME_GAP_MS
-#define RFID_RESUME_GAP_MS      (3U * RFID_POLL_MS) /* pausa que se considera "reanudación" */
+#define RFID_RESUME_GAP_MS      (3U * RFID_POLL_MS)
 #endif
 
 
 
-// La librería que pone en el enunciado (MFRC522) no compila si no se pone esto
+// La librería que pone en el enunciado (MFRC522 de janfietz) no compila si no se pone esto
 // Son macros que usa definidas en alguna librería que no usamos
 // Ni idea de lo que hacen
 #define osalDbgCheck(c)         ((void)0)
@@ -102,13 +102,13 @@ typedef enum {
     RFID_EV_ERROR           /* el lector no responde por SPI (se reintenta solo)     */
 } RFID_Event;
 
-// ------------------------------------ //
+// ----------------------------------------- //
 // Funciones para usar en state_logic global.
-// ------------------------------------ //
+// ----------------------------------------- //
 void        RFID_StateMachine_Init(const RFID_Config *cfg);
-RFID_Event  RFID_StateMachine_Run(RFID_Uid *uid);        /* uid puede ser NULL */
-bool        RFID_IsReady(void);             /* inicializado y sondeando           */
-bool        RFID_CardPresent(void);         /* según la última lectura realizada  */
+RFID_Event  RFID_StateMachine_Run(RFID_Uid *uid);
+bool        RFID_IsReady(void);
+bool        RFID_CardPresent(void);
 
 
 #endif /* INC_RFID_STATE_LOGIC_H_ */
