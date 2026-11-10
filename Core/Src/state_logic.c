@@ -52,10 +52,6 @@ static const RFID_Uid ID_autorizadas[] = {
 // Comprueba si uid está en ID_autorizadas
 bool UidAutorizado(const RFID_Uid *uid);
 
-const RFID_Config RFID_cfg = {
-		//@TODO: completar el RFID_Config;
-};
-
 // -------------------
 // LED Azul y botón usuario
 // -------------------

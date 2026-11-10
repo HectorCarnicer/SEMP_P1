@@ -178,6 +178,23 @@ static void RFID_EnterState(State next, uint32_t now)
 // API para usar en state_logic.c
 // ------------------------------------ //
 
+void RFID_BuildConfig(
+	const SPI_HandleTypeDef *hspi,
+	const GPIO_TypeDef      *cs_port,
+	const uint16_t           cs_pin,
+	const GPIO_TypeDef      *rst_port,
+	const uint16_t           rst_pin,
+	const uint32_t         (*get_ms)(void)
+	)
+{
+	cfg->hspi 		=	hspi;
+	cfg->cs_port	=	cs_port;
+	cfg->cs_pin		=	cs_pin;
+	cfg->rst_port	=	rst_port;
+	cfg->rst_pin	=	rst_pin;
+	cfg->get_ms		=	get_ms;
+}
+
 void RFID_StateMachine_Init(const RFID_Config *config)
 {
     cfg       = config;
