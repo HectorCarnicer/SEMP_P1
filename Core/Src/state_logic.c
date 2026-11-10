@@ -9,6 +9,7 @@
 #include "main.h"
 #include "main_config.h"
 #include "functions.h"
+#include "RFID_state_logic.h"
 #include "stm32f411e_discovery_accelerometer.h"
 
 
@@ -41,13 +42,28 @@ volatile uint8_t TIM2_ACL_flag = 0;
 // -------------------
 // RFID
 // -------------------
-volatile uint32_t current_pwd [N_RFID_PWD] = {0};
+
+// Contraseñas correctas hardcodeadas
+static const RFID_Uid ID_autorizadas[] = {
+    { 4, { 0xDE, 0xAD, 0xBE, 0xEF } },
+    { 7, { 0x04, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 } },
+};
+
+// Comprueba si uid está en ID_autorizadas
+bool UidAutorizado(const RFID_Uid *uid);
+
+const RFID_Config RFID_cfg = {
+		//@TODO: completar el RFID_Config;
+};
 
 // -------------------
 // LED Azul y botón usuario
 // -------------------
 volatile uint8_t TIM3_LED_flag = 0;
 volatile uint8_t PA0_BTUSR_flag = 0;
+
+
+
 
 
 void StateMachine_Run()
@@ -61,17 +77,21 @@ void StateMachine_Run()
 
 	// Máquina de estados
 	switch (state) {
+		// @TODO: Hace falta el estado IDLE para la condifuración del RFID
 		// Estado incial espera de pulsación botón usuario PA0, pasa a active
-		/*case IDLE:
-			if (PA0_BTUSR_flag == 1){
+		case IDLE:
+			if (PA0_BTUSR_flag == 1)
+			{
 
 				PA0_BTUSR_flag = 0;
 				Cal_OK_flag = 0;
 				TIM2_ACL_flag = 0;
 
+				RFID_StateMachine_Init(&RFID_cfg);
+
 				state = ACTIVE;
 			}
-		break;*/
+		break;
 
 		// Muestreo de acelerómetro y etiqueta válida
 		case ACTIVE:
@@ -134,6 +154,16 @@ void StateMachine_Run()
 
 			}
 
+			RFID_Uid uid;
+			RFID_Event ev = RFID_StateMachine_Run(&uid);
+			if (ev == RFID_EV_CARD_ARRIVED) {
+				if (UidAutorizado(&uid)) {
+					state = OPENCLOSE;
+				} else {
+					// tarjeta desconocida -> ignorar
+				}
+			}
+
 			// Se pone fuera para evitar que pulses antes de moverlo y que no entre a ALARM
 			PA0_BTUSR_flag = 0;
 
@@ -157,6 +187,7 @@ void StateMachine_Run()
 
 		// Si etiqueta valida, escribe clave en FLASH y LED VERDE ON 3s, después ACTIVE
 		case OPENCLOSE:
+			//@TODO: Hacer escritura en FLASH y encender LED VERDE 3 segundos
 
 		break;
 

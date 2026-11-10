@@ -8,9 +8,7 @@
 
 
 #include "RFID_state_logic.h"
-
 #include "mfrc522.h"
-#include "RFID_state_logic.h"
 #include <string.h>
 
 #define MFRC522_REG_VERSION     0x37
@@ -159,9 +157,9 @@ static void RFID_EnterState(State next, uint32_t now)
     case ST_READY:
         MFRC522ObjectInit(&drv);
         MFRC522Start(&drv, &drv_cfg);
-#ifdef RFID_TIMER_RELOAD
-        MFRC522WriteRegister(&drv, MFRC522_REG_T_RELOAD_L, RFID_TIMER_RELOAD);
-#endif
+//#ifdef RFID_TIMER_RELOAD
+//        MFRC522WriteRegister(&drv, MFRC522_REG_T_RELOAD_L, RFID_TIMER_RELOAD);
+//#endif
         ForgetCard();
         last_call = now;
         break;

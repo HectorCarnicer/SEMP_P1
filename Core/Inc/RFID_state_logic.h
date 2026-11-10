@@ -8,6 +8,9 @@
 #ifndef INC_RFID_STATE_LOGIC_H_
 #define INC_RFID_STATE_LOGIC_H_
 
+// Usar la librería que nos dan
+#define HAL_USE_MFRC522 1
+
 
 #include "main_config.h"
 #include "type_defs.h"
@@ -15,13 +18,10 @@
 #include "type_defs.h"
 #include "main.h"
 #include "stm32f4xx_hal.h"
+#include "mfrc522.h"
 #include <stdint.h>
 #include <stdbool.h>
 
-// Usar la librería que nos dan
-#ifndef HAL_USE_MFRC522
-#define HAL_USE_MFRC522         1
-#endif
 
 
 // ------------------------------------ //
@@ -49,13 +49,7 @@
 
 
 
-// La librería que pone en el enunciado (MFRC522 de janfietz) no compila si no se pone esto
-// Son macros que usa definidas en alguna librería que no usamos
-// Ni idea de lo que hacen
-#define osalDbgCheck(c)         ((void)0)
-#define osalDbgAssert(c, r)     ((void)0)
-#define osalSysLock()           ((void)0)
-#define osalSysUnlock()         ((void)0)
+
 
 
 
