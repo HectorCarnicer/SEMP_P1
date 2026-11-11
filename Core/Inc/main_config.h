@@ -1,4 +1,4 @@
-/*
+    /*
  * main_config.h
  *
  *  Created on: 22 oct 2026
@@ -32,5 +32,8 @@
 
 #define GPIO_SPI_RST_PORT GPIOD
 #define GPIO_SPI_RST_PIN GPIO_PIN_1
+
+// Según datasheet
+#define FLASH_BASE_ADDRESS 0x08060000
 
 #endif /* INC_MAIN_CONFIG_H_ */

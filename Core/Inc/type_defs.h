@@ -12,8 +12,8 @@
 
 typedef enum {
 	IDLE,
-	ACTIVE,
-	OPENCLOSE,
+	CLOSE,
+	OPEN,
 	ALARM
 } state_t;
 

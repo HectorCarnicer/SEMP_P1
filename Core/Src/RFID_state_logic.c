@@ -19,6 +19,13 @@ static const RFID_Config  *cfg = NULL;
 static MFRC522Driver       drv;
 static const MFRC522Config drv_cfg;     /* vacía en la librería */
 
+typedef enum {
+    ST_RESET,
+    ST_RESET_LOW,
+    ST_STARTUP,
+    ST_READY,
+    ST_ERROR
+} State;
 
 // ------------------------------------------------ //
 // Estructurado como una FSM paralela a la global
@@ -26,12 +33,12 @@ static const MFRC522Config drv_cfg;     /* vacía en la librería */
 // ------------------------------------------------ //
 
 
-static State     state     = ST_RESET;
-static uint32_t  t_ref     = 0;         /* referencia de tiempo del estado actual   */
-static uint32_t  last_call = 0;         /* instante de la última llamada a RFID_Run */
-static bool      present   = false;     /* había tarjeta en la última lectura       */
-static uint8_t   misses    = 0;         /* lecturas fallidas seguidas con tarjeta   */
-static RFID_Uid  last_uid;              /* UID de la tarjeta presente               */
+static State     state     = ST_RESET;	// Estado de la FSM
+static uint32_t  t_ref     = 0;         // Base de tiempos obtenida de HAL_GetTick
+static uint32_t  last_call = 0;         // Tiempo en ms cuando se llamó por última vez a StateMachine_Run
+static bool      present   = false;     // había tarjeta en la última lectura
+static uint8_t   misses    = 0;         // lecturas fallidas seguidas con tarjeta
+static RFID_Uid  last_uid;              // UID de la tarjeta actual
 
 
 
@@ -141,7 +148,7 @@ static RFID_Event Poll(RFID_Uid *uid)
     return RFID_EV_CARD_REMOVED;
 }
 
-// Función estándar de transición de estado
+// Función estándar de transición de estado -> Máuina de Mealy y esas cosas
 static void RFID_EnterState(State next, uint32_t now)
 {
     switch (next)
@@ -157,9 +164,6 @@ static void RFID_EnterState(State next, uint32_t now)
     case ST_READY:
         MFRC522ObjectInit(&drv);
         MFRC522Start(&drv, &drv_cfg);
-//#ifdef RFID_TIMER_RELOAD
-//        MFRC522WriteRegister(&drv, MFRC522_REG_T_RELOAD_L, RFID_TIMER_RELOAD);
-//#endif
         ForgetCard();
         last_call = now;
         break;

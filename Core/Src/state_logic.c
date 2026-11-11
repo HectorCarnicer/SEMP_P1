@@ -10,15 +10,17 @@
 #include "main.h"
 #include "main_config.h"
 #include "RFID_state_logic.h"
+#include "write_flash_rfid.h"
 #include "stm32f411e_discovery_accelerometer.h"
 #include <string.h>
+#include <stddef.h>
 
 
 // INCIALIZACIÓN DE VARIABLES
 // -------------------
 // Máquina de estados
 // -------------------
-static state_t state = ACTIVE;
+static state_t state = CLOSE;
 
 // -------------------
 // Acelerómetro
@@ -60,7 +62,7 @@ volatile uint8_t TIM3_LED_flag = 0;
 volatile uint8_t PA0_BTUSR_flag = 0;
 
 // Para contar 3 ciclos de TIM3 (3 * 1seg. = 3 seg.) y encender/apagar el LED verde
-volatile uint8_t active_counter = 0;
+volatile int8_t open_counter = 0;
 
 void StateMachine_Run()
 {
@@ -70,144 +72,161 @@ void StateMachine_Run()
 		TIM3_LED_flag = 0;
 		HAL_GPIO_TogglePin(GPIO_LED_BLUE_PORT, GPIO_LED_BLUE_PIN);
 	}
+	RFID_Uid uid;
+	RFID_Event ev;
 
 	// Máquina de estados
 	switch (state) {
-		// @TODO: Hace falta el estado IDLE?
-		// Estado incial espera de pulsación botón usuario PA0, pasa a active
-		case IDLE:
-			if (PA0_BTUSR_flag == 1)
-			{
+	// @TODO: Hace falta el estado IDLE?
+	// Estado incial espera de pulsación botón usuario PA0, pasa a CLOSE
+	case IDLE:
+		if (PA0_BTUSR_flag == 1)
+		{
 
-				PA0_BTUSR_flag = 0;
-				Cal_OK_flag = 0;
-				TIM2_ACL_flag = 0;
+			PA0_BTUSR_flag = 0;
+			Cal_OK_flag = 0;
+			TIM2_ACL_flag = 0;
 
-				state = ACTIVE;
-			}
+			state = CLOSE;
+		}
 		break;
 
 		// Muestreo de acelerómetro y etiqueta válida
-		case ACTIVE:
-			// Muestreo acelerómetro
-			if (TIM2_ACL_flag == 1){
-				// reinicio flag
-				TIM2_ACL_flag = 0;
+	case CLOSE:
+		// Muestreo acelerómetro
+		if (TIM2_ACL_flag == 1){
+			// reinicio flag
+			TIM2_ACL_flag = 0;
 
-				// Obtengo datos de acelerómetro
-				new_sample = GetAcelData(raw_acel);
+			// Obtengo datos de acelerómetro
+			new_sample = GetAcelData(raw_acel);
 
-				// Acumular las primeras 200 muestras para gravedad de referencia
-				if (Cal_OK_flag == 0) {
-					// Acumular la suma de cada eje
-					sum_x += (float)new_sample.x_axis;
-					sum_y += (float)new_sample.y_axis;
-					sum_z += (float)new_sample.z_axis;
-					sample_idx++;
+			// Acumular las primeras 200 muestras para gravedad de referencia
+			if (Cal_OK_flag == 0) {
+				// Acumular la suma de cada eje
+				sum_x += (float)new_sample.x_axis;
+				sum_y += (float)new_sample.y_axis;
+				sum_z += (float)new_sample.z_axis;
+				sample_idx++;
 
-					// Al completar las 200 muestras (1 segundo a 200 Hz)
-					if (sample_idx >= N_SAMPLES) {
-						grav_sample.x_axis = (int16_t)(sum_x / N_SAMPLES);
-						grav_sample.y_axis = (int16_t)(sum_y / N_SAMPLES);
-						grav_sample.z_axis = (int16_t)(sum_z / N_SAMPLES);
+				// Al completar las 200 muestras (1 segundo a 200 Hz)
+				if (sample_idx >= N_SAMPLES) {
+					grav_sample.x_axis = (int16_t)(sum_x / N_SAMPLES);
+					grav_sample.y_axis = (int16_t)(sum_y / N_SAMPLES);
+					grav_sample.z_axis = (int16_t)(sum_z / N_SAMPLES);
 
-						sum_x = 0;
-						sum_y = 0;
-						sum_z = 0;
+					sum_x = 0;
+					sum_y = 0;
+					sum_z = 0;
 
-						Cal_OK_flag = 1;
-						sample_idx = 0; // Reiniciar índice para el buffer de ventana
-					}
+					Cal_OK_flag = 1;
+					sample_idx = 0; // Reiniciar índice para el buffer de ventana
 				}
-
-				// Cálculo continuo de aceleración dinamica comparando con gravedad de referencia
-				else {
-					// Guardar en la ventana histórica (SaveWindow incrementa sample_idx internamente)
-					SaveWindow(new_sample, window, &sample_idx);
-
-					// Calcular aceleración dinámica restando la gravedad de referencia
-					float a_din = CalcModuleDin(new_sample, grav_sample);
-
-					// Verificar condición de alarma
-					if (CheckMov(a_din, TH_MAX)) {
-
-						//PA0_BTUSR_flag = 0;
-						Cal_OK_flag = 0;
-						TIM2_ACL_flag = 0;
-
-						sample_idx = 0;
-
-						state = ALARM;
-					}
-				}
-
 			}
-			else
+
+			// Cálculo continuo de aceleración dinamica comparando con gravedad de referencia
+			else {
+				// Guardar en la ventana histórica (SaveWindow incrementa sample_idx internamente)
+				SaveWindow(new_sample, window, &sample_idx);
+
+				// Calcular aceleración dinámica restando la gravedad de referencia
+				float a_din = CalcModuleDin(new_sample, grav_sample);
+
+				// Verificar condición de alarma
+				if (CheckMov(a_din, TH_MAX)) {
+
+					//PA0_BTUSR_flag = 0;
+					Cal_OK_flag = 0;
+					TIM2_ACL_flag = 0;
+
+					sample_idx = 0;
+
+					state = ALARM;
+				}
+			}
+
+		}
+		else
+		{
+
+		}
+
+		// Evaluar FSM del RFID
+		ev = RFID_StateMachine_Run(&uid);
+		if (ev == RFID_EV_CARD_ARRIVED)
+		{
+			if (UidAutorizado(&uid))
 			{
-
+				open_counter = 0;
+				UidStore_Add(&uid); // Escritura en la flash -> mirar write_flash_rfid.h
+				state = CLOSE;
+			} else {
+				// tarjeta desconocida -> ignorar
 			}
+		}
 
-			RFID_Uid uid;
-			RFID_Event ev = RFID_StateMachine_Run(&uid);
-			if (ev == RFID_EV_CARD_ARRIVED) {
-				if (UidAutorizado(&uid)) {
-					active_counter = 0;
-					state = OPENCLOSE;
-				} else {
-					// tarjeta desconocida -> ignorar
-				}
-			}
-
-			// Se pone fuera para evitar que pulses antes de moverlo y que no entre a ALARM
-			PA0_BTUSR_flag = 0;
+		// Se pone fuera para evitar que pulses antes de moverlo y que no entre a ALARM
+		PA0_BTUSR_flag = 0;
 
 
 		break;
 
 		// Si a,dim>TH_MAX, LED ROJO ON y espera botón usuario PA0
-		case ALARM:
+	case ALARM:
 
-			if (PA0_BTUSR_flag == 1){
-				PA0_BTUSR_flag = 0;
-				HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_RESET);
-				state = ACTIVE;
-			}
-			else {
-				HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_SET);
-			}
-
-
-		break;
-
-		// Si etiqueta valida, escribe clave en FLASH y LED VERDE ON 3s, después ACTIVE
-		case OPENCLOSE:
-			//@TODO: Hacer escritura en FLASH y encender LED VERDE 3 segundos
-
-			if (TIM3_LED_flag == 1)
-			{
-				active_counter ++;
-				TIM3_LED_flag = 0;
-			}
-
-			if (active_counter >= 0 && active_counter <= 2)
-			{
-				HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_SET);
-			}
-			else if (active_counter == 3)
-			{
-				HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_RESET);
-				state = ACTIVE;
-			}
+		if (PA0_BTUSR_flag == 1){
+			PA0_BTUSR_flag = 0;
+			HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_RESET);
+			state = CLOSE;
+		}
+		else {
+			HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_SET);
+		}
 
 
 		break;
 
-		default:
+		// Si etiqueta valida, escribe clave en FLASH y LED VERDE ON 3s, después si etiqueta válida CLOSE
+	case OPEN:
+
+		// Contar ciclos de TIM3 (1 seg.) para encender el LED. El contador se pone negativo para que solo lo haga una vez
+		if (TIM3_LED_flag == 1)
+		{
+			if (open_counter >= 0) open_counter ++;
+			TIM3_LED_flag = 0;
+		}
+		if (open_counter >= 0 && open_counter <= 2)
+		{
+			HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_SET);
+		}
+		else if (open_counter == 3)
+		{
+			HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_RESET);
+			open_counter = -1;
+		}
+
+		// Evaluar FSM del RFID
+		ev = RFID_StateMachine_Run(&uid);
+		if (ev == RFID_EV_CARD_ARRIVED)
+		{
+			if (UidAutorizado(&uid))
+			{
+				open_counter = 0;
+				UidStore_Add(&uid); // Escritura en la flash -> mirar write_flash_rfid.h
+				state = CLOSE;
+			} else {
+				// tarjeta desconocida -> ignorar
+			}
+		}
 
 		break;
+
+	default:
+
+		break;
+		}
+
 	}
-
-}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
@@ -240,14 +259,17 @@ void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 
 bool UidAutorizado(const RFID_Uid *uid)
 {
-    for (size_t i = 0; i < sizeof ID_autorizadas / sizeof ID_autorizadas[0]; i++) {
+    for (size_t i = 0; i < sizeof ID_autorizadas / sizeof ID_autorizadas[0]; i++)
+    {
         if (ID_autorizadas[i].size == uid->size &&
-            memcmp(ID_autorizadas[i].bytes, uid->bytes, uid->size) == 0) {
+            memcmp(ID_autorizadas[i].bytes, uid->bytes, uid->size) == 0)
+        {
             return true;
         }
     }
     return false;
 }
+
 
 
 

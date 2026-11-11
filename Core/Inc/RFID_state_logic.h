@@ -48,29 +48,9 @@
 #endif
 
 
-
-
-
-
-
-
-
-/* Opcional: valor de TReloadRegL tras MFRC522Start() para acortar el timeout de
-   la tarjeta (cada unidad = 0,5 ms con la configuración de la librería; ésta
-   pone 30 = 15 ms). Si no se define, se deja el valor de la librería.         */
-/* #define RFID_TIMER_RELOAD    6U */
-
 // ------------------------------------ //
 // Tipos específicos del RFID
 // ------------------------------------ //
-
-typedef enum {
-    ST_RESET,
-    ST_RESET_LOW,
-    ST_STARTUP,
-    ST_READY,
-    ST_ERROR
-} State;
 
 typedef struct {
     SPI_HandleTypeDef *hspi;
@@ -84,20 +64,19 @@ typedef struct {
 } RFID_Config;
 
 typedef struct {
-    uint8_t size;                       /* 4, 7 o 10 bytes */
+    uint8_t size;
     uint8_t bytes[10];
 } RFID_Uid;
 
 typedef enum {
-    RFID_EV_NONE = 0,       /* nada nuevo en esta llamada (inicializando, esperando
-                               el periodo, o lectura sin cambios)                    */
-    RFID_EV_CARD_ARRIVED,   /* tarjeta nueva (o distinta a la anterior); uid relleno */
-    RFID_EV_CARD_REMOVED,   /* la tarjeta se ha retirado; uid = la que se fue        */
-    RFID_EV_ERROR           /* el lector no responde por SPI (se reintenta solo)     */
+    RFID_EV_NONE = 0,  		// Sin evento en esta llamada
+    RFID_EV_CARD_ARRIVED,   // Tarjeta nueva (o distinta a la anterior) -> uid relleno
+    RFID_EV_CARD_REMOVED,   // La tarjeta se ha retirado; uid = la que se fue
+    RFID_EV_ERROR           // El lector no responde por SPI (se reintenta solo)
 } RFID_Event;
 
 // ----------------------------------------- //
-// Funciones para usar en state_logic global.
+// Funciones para usar en state_logic global
 // ----------------------------------------- //
 
 void        RFID_StateMachine_Init(const RFID_Config *cfg);
