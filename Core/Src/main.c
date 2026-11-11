@@ -24,6 +24,7 @@
 #include "main_config.h"
 #include "state_logic.h"
 #include "stm32f411e_discovery_accelerometer.h"
+#include "RFID_state_logic.h"
 
 /* USER CODE END Includes */
 
@@ -52,6 +53,14 @@ TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 
+const RFID_Config cfg = {
+		&hspi1,
+		GPIO_SPI_CS_PORT,
+		GPIO_SPI_CS_PIN,
+		GPIO_SPI_RST_PORT,
+		GPIO_SPI_RST_PIN,
+		&HAL_GetTick
+};
 
 /* USER CODE END PV */
 
@@ -109,6 +118,7 @@ int main(void)
       // Si falla la inicialización I2C, puedes detener la ejecución o encender un LED de error
       Error_Handler();
   }
+  RFID_StateMachine_Init(&cfg);
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim3);
   /* USER CODE END 2 */

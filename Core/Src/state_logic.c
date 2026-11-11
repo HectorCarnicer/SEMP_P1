@@ -5,12 +5,13 @@
  *      Author: hectorc
  */
 
+#include <accelerometer.h>
 #include "state_logic.h"
 #include "main.h"
 #include "main_config.h"
-#include "functions.h"
 #include "RFID_state_logic.h"
 #include "stm32f411e_discovery_accelerometer.h"
+#include <string.h>
 
 
 // INCIALIZACIÓN DE VARIABLES
@@ -58,9 +59,8 @@ bool UidAutorizado(const RFID_Uid *uid);
 volatile uint8_t TIM3_LED_flag = 0;
 volatile uint8_t PA0_BTUSR_flag = 0;
 
-
-
-
+// Para contar 3 ciclos de TIM3 (3 * 1seg. = 3 seg.) y encender/apagar el LED verde
+volatile uint8_t active_counter = 0;
 
 void StateMachine_Run()
 {
@@ -73,7 +73,7 @@ void StateMachine_Run()
 
 	// Máquina de estados
 	switch (state) {
-		// @TODO: Hace falta el estado IDLE para la condifuración del RFID
+		// @TODO: Hace falta el estado IDLE?
 		// Estado incial espera de pulsación botón usuario PA0, pasa a active
 		case IDLE:
 			if (PA0_BTUSR_flag == 1)
@@ -82,8 +82,6 @@ void StateMachine_Run()
 				PA0_BTUSR_flag = 0;
 				Cal_OK_flag = 0;
 				TIM2_ACL_flag = 0;
-
-				RFID_StateMachine_Init(&RFID_cfg);
 
 				state = ACTIVE;
 			}
@@ -144,7 +142,6 @@ void StateMachine_Run()
 				}
 
 			}
-			// Etiqueta válida
 			else
 			{
 
@@ -154,6 +151,7 @@ void StateMachine_Run()
 			RFID_Event ev = RFID_StateMachine_Run(&uid);
 			if (ev == RFID_EV_CARD_ARRIVED) {
 				if (UidAutorizado(&uid)) {
+					active_counter = 0;
 					state = OPENCLOSE;
 				} else {
 					// tarjeta desconocida -> ignorar
@@ -171,11 +169,11 @@ void StateMachine_Run()
 
 			if (PA0_BTUSR_flag == 1){
 				PA0_BTUSR_flag = 0;
-				HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, 0);
+				HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_RESET);
 				state = ACTIVE;
 			}
 			else {
-				HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, 1);
+				HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_SET);
 			}
 
 
@@ -184,6 +182,23 @@ void StateMachine_Run()
 		// Si etiqueta valida, escribe clave en FLASH y LED VERDE ON 3s, después ACTIVE
 		case OPENCLOSE:
 			//@TODO: Hacer escritura en FLASH y encender LED VERDE 3 segundos
+
+			if (TIM3_LED_flag == 1)
+			{
+				active_counter ++;
+				TIM3_LED_flag = 0;
+			}
+
+			if (active_counter >= 0 && active_counter <= 2)
+			{
+				HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_SET);
+			}
+			else if (active_counter == 3)
+			{
+				HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_RESET);
+				state = ACTIVE;
+			}
+
 
 		break;
 
@@ -196,7 +211,7 @@ void StateMachine_Run()
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
-	// LED azul
+	// LED azul y LED verde
 	if (htim->Instance == TIM3)
 	{
 		TIM3_LED_flag = 1;
@@ -210,18 +225,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 }
 
 
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-
-}
-
-
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-
-
-}
-
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 {
 
@@ -233,6 +236,17 @@ void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 		PA0_BTUSR_flag = 1;
 	}
 
+}
+
+bool UidAutorizado(const RFID_Uid *uid)
+{
+    for (size_t i = 0; i < sizeof ID_autorizadas / sizeof ID_autorizadas[0]; i++) {
+        if (ID_autorizadas[i].size == uid->size &&
+            memcmp(ID_autorizadas[i].bytes, uid->bytes, uid->size) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 

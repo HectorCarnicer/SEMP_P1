@@ -5,7 +5,7 @@
  *      Author: cesar
  */
 
-#include "functions.h"
+#include <accelerometer.h>
 
 
 acc_sample GetAcelData(int16_t *raw_data){

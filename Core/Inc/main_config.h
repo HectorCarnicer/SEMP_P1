@@ -25,4 +25,12 @@
 #define GPIO_USER_BUTTON_PORT GPIOA
 #define GPIO_USER_BUTTON_PIN GPIO_PIN_0
 
+
+// @TODO: Definir los pines CS y RST del SPI para la RFID
+#define GPIO_SPI_CS_PORT GPIOC
+#define GPIO_SPI_CS_PIN GPIO_PIN_4
+
+#define GPIO_SPI_RST_PORT GPIOD
+#define GPIO_SPI_RST_PIN GPIO_PIN_1
+
 #endif /* INC_MAIN_CONFIG_H_ */

@@ -99,14 +99,7 @@ typedef enum {
 // ----------------------------------------- //
 // Funciones para usar en state_logic global.
 // ----------------------------------------- //
-void 		RFID_BuildConfig(
-	const SPI_HandleTypeDef *hspi,
-	const GPIO_TypeDef      *cs_port,
-	const uint16_t           cs_pin,
-	const GPIO_TypeDef      *rst_port,
-	const uint16_t           rst_pin,
-	const uint32_t         (*get_ms)(void)
-	);
+
 void        RFID_StateMachine_Init(const RFID_Config *cfg);
 RFID_Event  RFID_StateMachine_Run(RFID_Uid *uid);
 bool        RFID_IsReady(void);
