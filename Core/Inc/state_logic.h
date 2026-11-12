@@ -15,13 +15,13 @@
 
 // DECLARACIÓN DE VARIABLES
 // Ventana de muestreo, índice y flag para almacenar 200 primeras muestras como media para calcular
-extern volatile uint16_t sample_idx;
+extern uint16_t sample_idx;
 
-extern volatile acc_sample window [N_SAMPLES];
+extern acc_sample window [N_SAMPLES];
 extern volatile acc_sample grav_window [N_SAMPLES];
 extern volatile acc_sample grav_sample;
-extern volatile int16_t raw_acel[3];
-extern volatile acc_sample new_sample;
+extern int16_t raw_acel[3];
+extern acc_sample new_sample;
 
 extern volatile uint8_t Cal_OK_flag;
 
@@ -31,13 +31,13 @@ extern volatile uint8_t TIM3_LED_flag;
 extern volatile uint8_t TIM2_ACL_flag;
 extern volatile uint8_t PA0_BTUSR_flag;
 
-error_t StateMachine_Init();
+//void StateMachine_Init();
 
 void StateMachine_Run();
 
-error_t StateMachine_EnterState(state_t state);
+//void StateMachine_EnterState(state_t state);
 
-error_t Process_Sample();
+//void Process_Sample();
 
 
 

@@ -21,7 +21,6 @@ static const MFRC522Config drv_cfg;     /* vacía en la librería */
 
 typedef enum {
     ST_RESET,
-    ST_RESET_LOW,
     ST_STARTUP,
     ST_READY,
     ST_ERROR
@@ -164,6 +163,7 @@ static void RFID_EnterState(State next, uint32_t now)
     case ST_READY:
         MFRC522ObjectInit(&drv);
         MFRC522Start(&drv, &drv_cfg);
+        MFRC522WriteRegister(&drv, MFRC522_REG_T_RELOAD_L, RFID_TIMER_RELOAD); // Bajar el tiempo bloqueado
         ForgetCard();
         last_call = now;
         break;
@@ -186,7 +186,7 @@ static void RFID_EnterState(State next, uint32_t now)
 void RFID_StateMachine_Init(const RFID_Config *config)
 {
     cfg       = config;
-    state     = ST_RESET;
+    RFID_EnterState(ST_RESET, cfg->get_ms());
     last_call = cfg->get_ms();
     ForgetCard();
     HAL_GPIO_WritePin(cfg->cs_port, cfg->cs_pin, GPIO_PIN_SET);

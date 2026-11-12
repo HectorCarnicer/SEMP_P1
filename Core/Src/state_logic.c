@@ -12,6 +12,7 @@
 #include "RFID_state_logic.h"
 #include "write_flash_rfid.h"
 #include "stm32f411e_discovery_accelerometer.h"
+#include "error_report.h"
 #include <string.h>
 #include <stddef.h>
 
@@ -26,14 +27,14 @@ static state_t state = CLOSE;
 // Acelerómetro
 // -------------------
 // Muestra del vector window x,y,z
-volatile uint16_t sample_idx = 0;
+uint16_t sample_idx = 0;
 // Estructura de componentes de aceleración
-volatile acc_sample window [N_SAMPLES] = {0};
+acc_sample window [N_SAMPLES] = {0};
 //volatile acc_sample grav_window [N_SAMPLES] = {0};
 volatile acc_sample grav_sample = {0};
-volatile acc_sample new_sample = {0};
+acc_sample new_sample = {0};
 // Vectores de apoyo
-volatile int16_t raw_acel[3] = {0};
+int16_t raw_acel[3] = {0};
 static float sum_x = 0;
 static float sum_y = 0;
 static float sum_z = 0;
@@ -47,9 +48,15 @@ volatile uint8_t TIM2_ACL_flag = 0;
 // -------------------
 
 // Contraseñas correctas hardcodeadas
+// Leído de las tags físicas con la app NFC Tools del móvil
+// No sé en qué sentido están los bytes, para testear pongo los dos
 static const RFID_Uid ID_autorizadas[] = {
-    { 4, { 0xDE, 0xAD, 0xBE, 0xEF } },
-    { 7, { 0x04, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 } },
+	// Tarjeta
+    { 4, { 0xD7, 0x7D, 0x8E, 0x25 } },
+	{ 4, { 0x25, 0x8E, 0x7D, 0xD7 } },
+	// Tag
+	{ 4, { 0x0A, 0xD4, 0x86, 0xE1 } },
+	{ 4, { 0xE1, 0x86, 0xD4, 0x0A } },
 };
 
 // Comprueba si uid está en ID_autorizadas
@@ -59,6 +66,7 @@ bool UidAutorizado(const RFID_Uid *uid);
 // LED Azul y botón usuario
 // -------------------
 volatile uint8_t TIM3_LED_flag = 0;
+volatile uint8_t TIM3_LED_G_flag = 0;
 volatile uint8_t PA0_BTUSR_flag = 0;
 
 // Para contar 3 ciclos de TIM3 (3 * 1seg. = 3 seg.) y encender/apagar el LED verde
@@ -94,11 +102,13 @@ void StateMachine_Run()
 		// Muestreo de acelerómetro y etiqueta válida
 	case CLOSE:
 		// Muestreo acelerómetro
+		// @TODO: Comprobar errores del acelerómetro y lanzar ERROR_REPORT()
 		if (TIM2_ACL_flag == 1){
 			// reinicio flag
 			TIM2_ACL_flag = 0;
 
 			// Obtengo datos de acelerómetro
+
 			new_sample = GetAcelData(raw_acel);
 
 			// Acumular las primeras 200 muestras para gravedad de referencia
@@ -158,8 +168,12 @@ void StateMachine_Run()
 			if (UidAutorizado(&uid))
 			{
 				open_counter = 0;
-				UidStore_Add(&uid); // Escritura en la flash -> mirar write_flash_rfid.h
-				state = CLOSE;
+				HAL_StatusTypeDef st = UidStore_Add(&uid);
+				if (st != HAL_OK)// Escritura en la flash -> mirar write_flash_rfid.h
+				{
+					ERROR_REPORT("[ERR]: StateMachine_Run() -> CLOSE:UidStore_Add(&uid) -> Error HAL %d\n", st);
+				}
+				state = OPEN;
 			} else {
 				// tarjeta desconocida -> ignorar
 			}
@@ -190,10 +204,10 @@ void StateMachine_Run()
 	case OPEN:
 
 		// Contar ciclos de TIM3 (1 seg.) para encender el LED. El contador se pone negativo para que solo lo haga una vez
-		if (TIM3_LED_flag == 1)
+		if (TIM3_LED_G_flag == 1)
 		{
 			if (open_counter >= 0) open_counter ++;
-			TIM3_LED_flag = 0;
+			TIM3_LED_G_flag = 0;
 		}
 		if (open_counter >= 0 && open_counter <= 2)
 		{
@@ -212,7 +226,12 @@ void StateMachine_Run()
 			if (UidAutorizado(&uid))
 			{
 				open_counter = 0;
-				UidStore_Add(&uid); // Escritura en la flash -> mirar write_flash_rfid.h
+				HAL_StatusTypeDef st = UidStore_Add(&uid);// Escritura en la flash -> mirar write_flash_rfid.h
+				if (st != HAL_OK)
+				{
+					ERROR_REPORT("[ERR]: StateMachine_Run() -> OPEN:UidStore_Add(&uid) -> Error HAL %d\n", st);
+				}
+				HAL_GPIO_WritePin(GPIO_LED_GREEN_PORT, GPIO_LED_GREEN_PIN, GPIO_PIN_RESET);
 				state = CLOSE;
 			} else {
 				// tarjeta desconocida -> ignorar
@@ -222,7 +241,9 @@ void StateMachine_Run()
 		break;
 
 	default:
-
+		ERROR_REPORT("[ERR]: StateMachine_Run() -> DEFAULT -> estado incorrecto\n");
+		state = CLOSE;
+		Cal_OK_flag = 0;
 		break;
 		}
 
@@ -234,6 +255,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	if (htim->Instance == TIM3)
 	{
 		TIM3_LED_flag = 1;
+		TIM3_LED_G_flag = 1;
 	}
 
 	// Acelerómetro

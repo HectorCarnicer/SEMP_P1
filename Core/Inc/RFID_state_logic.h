@@ -46,6 +46,9 @@
 #ifndef RFID_RESUME_GAP_MS
 #define RFID_RESUME_GAP_MS      (3U * RFID_POLL_MS)
 #endif
+#ifndef RFID_TIMER_RELOAD
+#define RFID_TIMER_RELOAD       6U      /* timeout de la tarjeta: 6 × 0,5 ms = 3 ms (librería: 30 = 15 ms) */
+#endif
 
 
 // ------------------------------------ //

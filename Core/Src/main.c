@@ -25,6 +25,7 @@
 #include "state_logic.h"
 #include "stm32f411e_discovery_accelerometer.h"
 #include "RFID_state_logic.h"
+#include "error_report.h"
 
 /* USER CODE END Includes */
 
@@ -116,11 +117,20 @@ int main(void)
   /* USER CODE BEGIN 2 */
   if (BSP_ACCELERO_Init() != ACCELERO_OK) {
       // Si falla la inicialización I2C, puedes detener la ejecución o encender un LED de error
+	  ERROR_REPORT("[ERR]:main() -> BSP_ACCELERO_Init() ha fallado\n");
       Error_Handler();
   }
   RFID_StateMachine_Init(&cfg);
-  HAL_TIM_Base_Start_IT(&htim2);
-  HAL_TIM_Base_Start_IT(&htim3);
+  if (HAL_TIM_Base_Start_IT(&htim2)!= HAL_OK)
+  {
+	  ERROR_REPORT("[ERR]:main() -> HAL_TIM_Base_Start_IT(&htim2) ha fallado\n");
+	  Error_Handler();
+  }
+  if (HAL_TIM_Base_Start_IT(&htim3)!= HAL_OK)
+    {
+  	  ERROR_REPORT("[ERR]:main() -> HAL_TIM_Base_Start_IT(&htim3) ha fallado\n");
+  	  Error_Handler();
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -238,7 +248,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -400,7 +410,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+#ifdef DEBUG
+// _write() de syscalls.c llama a esta función por cada carácter de printf()
+// Siguiendo el tutorial del moodle para depurar mejor
+int __io_putchar(int ch)
+{
+    ITM_SendChar((uint32_t)ch);
+    return ch;
+}
+#endif
 /* USER CODE END 4 */
 
 /**
@@ -410,6 +428,7 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+	ERROR_REPORT("[ERR]: Error_handler() -> Error fatal\n");
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)

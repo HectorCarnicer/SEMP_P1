@@ -10,7 +10,7 @@
 
 #include <RFID_state_logic.h>
 #include <stm32f4xx_hal_def.h>
-#include <sys/_stdint.h>
+#include <stdint.h>
 
 #ifndef UID_FLASH_ADDR
 #define UID_FLASH_ADDR    0x08060000U  // Inicio del último sector de flash según datasheet

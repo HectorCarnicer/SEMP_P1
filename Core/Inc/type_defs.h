@@ -17,14 +17,6 @@ typedef enum {
 	ALARM
 } state_t;
 
-typedef enum
-{
-	TIMEOUT,
-	ERROR_SPI,
-	ERROR_TIMER
-}error_t;
-
-
 
 typedef struct
 {
