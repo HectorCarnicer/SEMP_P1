@@ -85,9 +85,9 @@ void StateMachine_Run()
 
 	// Máquina de estados
 	switch (state) {
-	// @TODO: Hace falta el estado IDLE?
+	// @TODO:No hace falta el estado IDLE
 	// Estado incial espera de pulsación botón usuario PA0, pasa a CLOSE
-	case IDLE:
+/*	case IDLE:
 		if (PA0_BTUSR_flag == 1)
 		{
 
@@ -97,7 +97,7 @@ void StateMachine_Run()
 
 			state = CLOSE;
 		}
-		break;
+		break;*/
 
 		// Muestreo de acelerómetro y etiqueta válida
 	case CLOSE:
