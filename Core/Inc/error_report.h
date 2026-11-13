@@ -22,9 +22,12 @@
         HAL_GPIO_WritePin(GPIO_LED_ERR_PORT, GPIO_LED_ERR_PIN, GPIO_PIN_SET);  \
         printf(__VA_ARGS__);                                                   \
     } while (0)
+#define DEBUG_REPORT(...)  printf(__VA_ARGS__);
 #else
 #define ERROR_REPORT(...)                                                      \
     HAL_GPIO_WritePin(GPIO_LED_ERR_PORT, GPIO_LED_ERR_PIN, GPIO_PIN_SET)
 #endif
+
+
 
 #endif /* INC_ERROR_REPORT_H_ */

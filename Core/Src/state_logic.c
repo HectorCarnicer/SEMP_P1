@@ -144,13 +144,14 @@ void StateMachine_Run()
 
 				// Verificar condición de alarma
 				if (CheckMov(a_din, TH_MAX)) {
-
+					DEBUG_REPORT("[DEBUG]: StateMachine_Run() -> CLOSE: CheckMov()\n");
 					//PA0_BTUSR_flag = 0;
 					Cal_OK_flag = 0;
 					TIM2_ACL_flag = 0;
 
 					sample_idx = 0;
 
+					DEBUG_REPORT("[DEBUG]: StateMachine_Run -> CLOSE: Pasamos a estado de ALARM");
 					state = ALARM;
 				}
 			}
@@ -163,16 +164,23 @@ void StateMachine_Run()
 
 		// Evaluar FSM del RFID
 		ev = RFID_StateMachine_Run(&uid);
+		if (ev == RFID_EV_ERROR)
+		{
+		    ERROR_REPORT("[ERR]: RFID: el MFRC522 no responde por SPI\n");
+		}
 		if (ev == RFID_EV_CARD_ARRIVED)
 		{
+			DEBUG_REPORT("[DEBUG]: StateMachine_Run() -> CLOSE: ev == RFID_EV_CARD_ARRIVED\n");
 			if (UidAutorizado(&uid))
 			{
+				DEBUG_REPORT("[DEBUG]: StateMachine_Run() -> CLOSE: UidAutorizado\n");
 				open_counter = 0;
 				HAL_StatusTypeDef st = UidStore_Add(&uid);
 				if (st != HAL_OK)// Escritura en la flash -> mirar write_flash_rfid.h
 				{
 					ERROR_REPORT("[ERR]: StateMachine_Run() -> CLOSE:UidStore_Add(&uid) -> Error HAL %d\n", st);
 				}
+				TIM3_LED_G_flag = 0;
 				state = OPEN;
 			} else {
 				// tarjeta desconocida -> ignorar
@@ -187,7 +195,7 @@ void StateMachine_Run()
 
 		// Si a,dim>TH_MAX, LED ROJO ON y espera botón usuario PA0
 	case ALARM:
-
+		//DEBUG_REPORT("[DEBUG]: StateMachine_Run() -> ALARM\n");
 		if (PA0_BTUSR_flag == 1){
 			PA0_BTUSR_flag = 0;
 			HAL_GPIO_WritePin(GPIO_LED_RED_PORT, GPIO_LED_RED_PIN, GPIO_PIN_RESET);
@@ -202,7 +210,6 @@ void StateMachine_Run()
 
 		// Si etiqueta valida, escribe clave en FLASH y LED VERDE ON 3s, después si etiqueta válida CLOSE
 	case OPEN:
-
 		// Contar ciclos de TIM3 (1 seg.) para encender el LED. El contador se pone negativo para que solo lo haga una vez
 		if (TIM3_LED_G_flag == 1)
 		{
@@ -221,10 +228,16 @@ void StateMachine_Run()
 
 		// Evaluar FSM del RFID
 		ev = RFID_StateMachine_Run(&uid);
+		if (ev == RFID_EV_ERROR)
+		{
+		    ERROR_REPORT("[ERR]: RFID: el MFRC522 no responde por SPI\n");
+		}
 		if (ev == RFID_EV_CARD_ARRIVED)
 		{
+			DEBUG_REPORT("[DEBUG]: StateMachine_Run() -> OPEN: ev == RFID_EV_CARD_ARRIVED\n");
 			if (UidAutorizado(&uid))
 			{
+				DEBUG_REPORT("[DEBUG]: StateMachine_Run() -> OPEN: UidAutorizado\n");
 				open_counter = 0;
 				HAL_StatusTypeDef st = UidStore_Add(&uid);// Escritura en la flash -> mirar write_flash_rfid.h
 				if (st != HAL_OK)

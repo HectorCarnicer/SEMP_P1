@@ -31,7 +31,6 @@
 #define GPIO_USER_BUTTON_PIN GPIO_PIN_0
 
 
-// @TODO: Definir los pines CS y RST del SPI para la RFID
 #define GPIO_SPI_CS_PORT GPIOC
 #define GPIO_SPI_CS_PIN GPIO_PIN_4
 
@@ -62,6 +61,10 @@
 
 #define GPIO_SPI_RST_PORT 		GPIOC
 #define GPIO_SPI_RST_PIN 		GPIO_PIN_5
+
+// Giroscopio
+#define GPIO_GYRO_CS_PORT       GPIOE
+#define GPIO_GYRO_CS_PIN        GPIO_PIN_3
 
 
 

@@ -57,6 +57,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define GYRO_CS_Pin GPIO_PIN_3
+#define GYRO_CS_GPIO_Port GPIOE
+#define RFID_CS_Pin GPIO_PIN_4
+#define RFID_CS_GPIO_Port GPIOC
+#define RFID_RST_Pin GPIO_PIN_5
+#define RFID_RST_GPIO_Port GPIOC
+#define LED_ERR_Pin GPIO_PIN_13
+#define LED_ERR_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

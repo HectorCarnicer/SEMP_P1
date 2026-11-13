@@ -41,10 +41,7 @@
 #define RFID_RETRY_MS           1000U   /* reintento de inicialización tras un error  */
 #endif
 #ifndef RFID_REMOVE_MISSES
-#define RFID_REMOVE_MISSES      2U      /* lecturas fallidas seguidas para "retirada" */
-#endif
-#ifndef RFID_RESUME_GAP_MS
-#define RFID_RESUME_GAP_MS      (3U * RFID_POLL_MS)
+#define RFID_REMOVE_MISSES      5U      /* lecturas fallidas seguidas para "retirada" */
 #endif
 #ifndef RFID_TIMER_RELOAD
 #define RFID_TIMER_RELOAD       6U      /* timeout de la tarjeta: 6 × 0,5 ms = 3 ms (librería: 30 = 15 ms) */

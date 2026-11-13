@@ -34,7 +34,6 @@ typedef enum {
 
 static State     state     = ST_RESET;	// Estado de la FSM
 static uint32_t  t_ref     = 0;         // Base de tiempos obtenida de HAL_GetTick
-static uint32_t  last_call = 0;         // Tiempo en ms cuando se llamó por última vez a StateMachine_Run
 static bool      present   = false;     // había tarjeta en la última lectura
 static uint8_t   misses    = 0;         // lecturas fallidas seguidas con tarjeta
 static RFID_Uid  last_uid;              // UID de la tarjeta actual
@@ -165,7 +164,6 @@ static void RFID_EnterState(State next, uint32_t now)
         MFRC522Start(&drv, &drv_cfg);
         MFRC522WriteRegister(&drv, MFRC522_REG_T_RELOAD_L, RFID_TIMER_RELOAD); // Bajar el tiempo bloqueado
         ForgetCard();
-        last_call = now;
         break;
 
     case ST_ERROR:
@@ -187,7 +185,6 @@ void RFID_StateMachine_Init(const RFID_Config *config)
 {
     cfg       = config;
     RFID_EnterState(ST_RESET, cfg->get_ms());
-    last_call = cfg->get_ms();
     ForgetCard();
     HAL_GPIO_WritePin(cfg->cs_port, cfg->cs_pin, GPIO_PIN_SET);
 }
@@ -223,21 +220,6 @@ RFID_Event RFID_StateMachine_Run(RFID_Uid *uid)
         break;
 
     case ST_READY:
-
-    	// ------------------------------------ //
-        // Reanudación: si hace tiempo que nadie llamaba (la FSM global estaba en otro
-    	// estado), se olvida la tarjeta anterior y se lee en esta misma llamada.
-    	// Así una tarjeta que sigue en el lector vuelve a generar CARD_ARRIVED y
-    	// nunca se emite un REMOVED de algo que ocurrió mientras no se miraba.
-    	// ------------------------------------ //
-
-        bool resumed = (now - last_call) > RFID_RESUME_GAP_MS;
-        last_call = now;
-
-        if (resumed)
-        {
-            ForgetCard();
-        }
 
         // Lectura normal cada RFID_POLL_MS
         if (now - t_ref >= RFID_POLL_MS)
