@@ -12,6 +12,17 @@
 
 #if HAL_USE_MFRC522 || defined(__DOXYGEN__)
 
+<<<<<<< HEAD
+=======
+// La librería que pone en el enunciado (MFRC522 de janfietz) no compila si no se pone esto
+// Son macros que usa definidas en alguna librería que no usamos
+// Ni idea de lo que hacen
+#define osalDbgCheck(c)         ((void)0)
+#define osalDbgAssert(c, r)     ((void)0)
+#define osalSysLock()           ((void)0)
+#define osalSysUnlock()         ((void)0)
+
+>>>>>>> dev
 /*===========================================================================*/
 /* Driver constants.                                                         */
 /*===========================================================================*/

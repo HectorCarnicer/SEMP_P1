@@ -21,6 +21,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+<<<<<<< HEAD
+=======
+#include "main_config.h"
+#include "state_logic.h"
+#include "stm32f411e_discovery_accelerometer.h"
+#include "RFID_state_logic.h"
+#include "error_report.h"
+>>>>>>> dev
 
 /* USER CODE END Includes */
 
@@ -44,10 +52,27 @@ I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi1;
 
+<<<<<<< HEAD
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
 
+=======
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+
+/* USER CODE BEGIN PV */
+
+const RFID_Config cfg = {
+		&hspi1,
+		GPIO_SPI_CS_PORT,
+		GPIO_SPI_CS_PIN,
+		GPIO_SPI_RST_PORT,
+		GPIO_SPI_RST_PIN,
+		&HAL_GetTick
+};
+
+>>>>>>> dev
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,7 +80,12 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
+<<<<<<< HEAD
 static void MX_TIM1_Init(void);
+=======
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
+>>>>>>> dev
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -96,9 +126,31 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
+<<<<<<< HEAD
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+=======
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  /* USER CODE BEGIN 2 */
+  if (BSP_ACCELERO_Init() != ACCELERO_OK) {
+      // Si falla la inicialización I2C, puedes detener la ejecución o encender un LED de error
+	  ERROR_REPORT("[ERR]:main() -> BSP_ACCELERO_Init() ha fallado\n");
+      Error_Handler();
+  }
+  RFID_StateMachine_Init(&cfg);
+  if (HAL_TIM_Base_Start_IT(&htim2)!= HAL_OK)
+  {
+	  ERROR_REPORT("[ERR]:main() -> HAL_TIM_Base_Start_IT(&htim2) ha fallado\n");
+	  Error_Handler();
+  }
+  if (HAL_TIM_Base_Start_IT(&htim3)!= HAL_OK)
+    {
+  	  ERROR_REPORT("[ERR]:main() -> HAL_TIM_Base_Start_IT(&htim3) ha fallado\n");
+  	  Error_Handler();
+    }
+>>>>>>> dev
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -108,6 +160,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+<<<<<<< HEAD
+=======
+	StateMachine_Run();
+>>>>>>> dev
   }
   /* USER CODE END 3 */
 }
@@ -215,7 +271,11 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
+<<<<<<< HEAD
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+=======
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+>>>>>>> dev
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -231,6 +291,7 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+<<<<<<< HEAD
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -241,11 +302,24 @@ static void MX_TIM1_Init(void)
   /* USER CODE BEGIN TIM1_Init 0 */
 
   /* USER CODE END TIM1_Init 0 */
+=======
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+>>>>>>> dev
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_SlaveConfigTypeDef sSlaveConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
+<<<<<<< HEAD
   /* USER CODE BEGIN TIM1_Init 1 */
 
   /* USER CODE END TIM1_Init 1 */
@@ -257,10 +331,23 @@ static void MX_TIM1_Init(void)
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+=======
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 47;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 4999;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+>>>>>>> dev
   {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+<<<<<<< HEAD
   if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
   {
     Error_Handler();
@@ -268,11 +355,21 @@ static void MX_TIM1_Init(void)
   sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
   sSlaveConfig.InputTrigger = TIM_TS_ITR0;
   if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
+=======
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
+>>>>>>> dev
   {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+<<<<<<< HEAD
   if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
@@ -280,6 +377,67 @@ static void MX_TIM1_Init(void)
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
+=======
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 999;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 47999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+>>>>>>> dev
 
 }
 
@@ -296,12 +454,35 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+<<<<<<< HEAD
   __HAL_RCC_GPIOA_CLK_ENABLE();
+=======
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+>>>>>>> dev
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+<<<<<<< HEAD
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+=======
+  HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, RFID_CS_Pin|RFID_RST_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|LED_ERR_Pin|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : GYRO_CS_Pin */
+  GPIO_InitStruct.Pin = GYRO_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GYRO_CS_GPIO_Port, &GPIO_InitStruct);
+>>>>>>> dev
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -309,20 +490,51 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+<<<<<<< HEAD
   /*Configure GPIO pins : PD12 PD14 PD15 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15;
+=======
+  /*Configure GPIO pins : RFID_CS_Pin RFID_RST_Pin */
+  GPIO_InitStruct.Pin = RFID_CS_Pin|RFID_RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PD12 LED_ERR_Pin PD14 PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|LED_ERR_Pin|GPIO_PIN_14|GPIO_PIN_15;
+>>>>>>> dev
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+<<<<<<< HEAD
+=======
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+>>>>>>> dev
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+<<<<<<< HEAD
 
+=======
+#ifdef DEBUG
+// _write() de syscalls.c llama a esta función por cada carácter de printf()
+// Siguiendo el tutorial del moodle para depurar mejor
+int __io_putchar(int ch)
+{
+    ITM_SendChar((uint32_t)ch);
+    return ch;
+}
+#endif
+>>>>>>> dev
 /* USER CODE END 4 */
 
 /**
@@ -332,6 +544,10 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+<<<<<<< HEAD
+=======
+	ERROR_REPORT("[ERR]: Error_handler() -> Error fatal\n");
+>>>>>>> dev
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
